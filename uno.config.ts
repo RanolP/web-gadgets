@@ -1,0 +1,51 @@
+import { defineConfig, presetUno, presetTypography, presetIcons } from 'unocss'
+
+export default defineConfig({
+  presets: [
+    presetUno({
+      dark: 'class',
+    }),
+    presetTypography(),
+    presetIcons({
+      scale: 1.2,
+      warn: true,
+    }),
+  ],
+  safelist: [
+    'i-tabler-qrcode',
+    'i-tabler-file',
+    'i-tabler-home',
+    'i-tabler-menu-2',
+    'i-tabler-upload',
+    'i-tabler-clipboard',
+    'i-tabler-copy',
+    'i-tabler-check',
+    'i-tabler-scan',
+    'i-tabler-x',
+    'i-tabler-trash',
+  ],
+  theme: {
+    colors: {
+      // VS Code theme colors
+      'vscode': {
+        'bg': '#1e1e1e',
+        'sidebar': '#252526',
+        'activity': '#333333',
+        'border': '#3e3e42',
+        'hover': '#2a2d2e',
+        'active': '#37373d',
+        'blue': '#007acc',
+        'blue-dark': '#005a9e',
+        'text': '#cccccc',
+        'text-dim': 'rgba(204, 204, 204, 0.6)',
+        'input': '#3c3c3c',
+        'error-bg': '#5a1d1d',
+        'error-text': '#f48771',
+      }
+    },
+  },
+  shortcuts: {
+    'vscode-button': 'px-4 py-2 bg-vscode-blue text-white rounded hover:bg-vscode-blue-dark transition-colors',
+    'vscode-input': 'px-3 py-2 bg-vscode-input border border-vscode-border rounded text-vscode-text focus:outline-none focus:border-vscode-blue',
+  },
+})

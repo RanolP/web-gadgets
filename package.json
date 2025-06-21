@@ -1,0 +1,27 @@
+{
+  "name": "gadgets.ranolp.dev",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource/pretendard": "^5.2.5",
+    "@solidjs/router": "^0.15.3",
+    "@zxing/browser": "^0.1.5",
+    "@zxing/library": "^0.21.3",
+    "cropperjs": "^2.0.0",
+    "solid-js": "^1.8.11"
+  },
+  "devDependencies": {
+    "@iconify-json/tabler": "^1.2.19",
+    "@types/node": "^24.0.3",
+    "@unocss/reset": "^66.2.3",
+    "typescript": "^5.8.3",
+    "unocss": "^66.2.3",
+    "vite": "^5.0.8",
+    "vite-plugin-solid": "^2.8.2"
+  }
+}
