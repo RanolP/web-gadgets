@@ -16,6 +16,33 @@ body {
     sans-serif;
 }
 
+/* Make UI elements unselectable */
+button,
+nav,
+header,
+footer,
+aside,
+.select-none {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+/* Keep content selectable */
+.select-text,
+.font-mono,
+p,
+span:not(.select-none),
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  user-select: text;
+}
+
 cropper-canvas {
   width: 100% !important;
   height: 100% !important;
@@ -33,4 +60,31 @@ cropper-canvas {
 
 .fixed[class*="bg-black"] {
   animation: fadeIn 0.2s ease-out;
+}
+
+/* Sliding drawer animation */
+@keyframes slideIn {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.drawer-enter {
+  animation: slideIn 0.2s ease-in-out forwards;
+}
+
+.drawer-exit {
+  animation: slideOut 0.2s ease-in-out forwards;
 }

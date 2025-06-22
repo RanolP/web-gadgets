@@ -1,4 +1,4 @@
-import { Component, onCleanup, createSignal, Show } from 'solid-js';
+import { Component, createSignal, Show } from 'solid-js';
 import Cropper from 'cropperjs';
 
 interface ImageCropperProps {
@@ -13,11 +13,6 @@ const ImageCropper: Component<ImageCropperProps> = (props) => {
   let cropper: Cropper | undefined;
 
   const [error, setError] = createSignal<string>('');
-
-  onCleanup(() => {
-    // Cropper v2 auto-cleans when element is removed
-    cropper = undefined;
-  });
 
   const initCropper = () => {
     if (!imageRef) return;
@@ -93,7 +88,7 @@ const ImageCropper: Component<ImageCropperProps> = (props) => {
 
   return (
     <div class="space-y-4">
-      <p class="text-sm text-[#cccccc]/60">
+      <p class="text-sm text-[#cccccc]/60 select-none">
         No QR code found. Try cropping the image to isolate the QR code:
       </p>
 
@@ -103,7 +98,7 @@ const ImageCropper: Component<ImageCropperProps> = (props) => {
         </div>
       </Show>
 
-      <div class="relative w-full max-w-lg aspect-square bg-[#252526] rounded overflow-hidden">
+      <div class="relative w-full max-w-lg mx-auto aspect-square bg-[#252526] rounded overflow-hidden">
         <img
           ref={imageRef}
           src={props.imageUrl}
@@ -116,7 +111,7 @@ const ImageCropper: Component<ImageCropperProps> = (props) => {
       <div class="flex gap-4">
         <button
           onClick={handleCrop}
-          class="px-4 py-2 bg-[#007acc] text-white rounded hover:bg-[#005a9e] transition-colors flex items-center gap-2"
+          class="px-4 py-2 bg-[#007acc] text-white rounded hover:bg-[#005a9e] transition-colors flex items-center gap-2 select-none"
           disabled={props.isLoading}
         >
           <i class="i-tabler-scan" />
@@ -124,7 +119,7 @@ const ImageCropper: Component<ImageCropperProps> = (props) => {
         </button>
         <button
           onClick={props.onCancel}
-          class="px-4 py-2 bg-[#3e3e42] text-[#cccccc] rounded hover:bg-[#505050] transition-colors flex items-center gap-2"
+          class="px-4 py-2 bg-[#3e3e42] text-[#cccccc] rounded hover:bg-[#505050] transition-colors flex items-center gap-2 select-none"
         >
           <i class="i-tabler-x" />
           Cancel
