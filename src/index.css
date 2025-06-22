@@ -88,3 +88,34 @@ cropper-canvas {
 .drawer-exit {
   animation: slideOut 0.2s ease-in-out forwards;
 }
+
+/* Toast animations */
+@keyframes toastSlideUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toastSlideOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(20%);
+    opacity: 0;
+  }
+}
+
+.animate-toast-slide-up {
+  animation: toastSlideUp 0.3s ease-out;
+}
+
+.animate-toast-slide-out {
+  animation: toastSlideOut 0.2s ease-in;
+}

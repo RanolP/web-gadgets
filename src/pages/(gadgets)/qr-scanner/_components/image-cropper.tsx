@@ -87,43 +87,55 @@ const ImageCropper: Component<ImageCropperProps> = (props) => {
   };
 
   return (
-    <div class="space-y-4">
-      <p class="text-sm text-[#cccccc]/60 select-none">
-        No QR code found. Try cropping the image to isolate the QR code:
-      </p>
-
-      <Show when={error()}>
-        <div class="p-3 bg-[#5a1d1d] text-[#f48771] rounded border border-[#f48771]/20 text-sm">
-          {error()}
+    <div class="p-4 bg-[#252526] rounded-lg border border-[#3e3e42] shadow-md">
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="flex items-center gap-2">
+              <i class="i-tabler-crop text-[#007acc] text-base" />
+              <span class="text-sm font-medium text-[#cccccc]">Crop QR Code</span>
+            </div>
+            <p class="text-xs text-[#cccccc]/60 mt-1 ml-6">Drag to isolate the QR code area</p>
+          </div>
+          <div class="flex gap-2">
+            <button
+              onClick={handleCrop}
+              class="px-3 py-1.5 text-sm bg-[#007acc] text-white rounded hover:bg-[#005a9e] transition-colors flex items-center gap-1.5 select-none"
+              disabled={props.isLoading}
+            >
+              <i class="i-tabler-scan text-base" />
+              Scan
+            </button>
+            <button
+              onClick={props.onCancel}
+              class="px-3 py-1.5 text-sm bg-[#3e3e42] text-[#cccccc] rounded hover:bg-[#505050] transition-colors flex items-center gap-1.5 select-none"
+            >
+              <i class="i-tabler-x text-base" />
+              Cancel
+            </button>
+          </div>
         </div>
-      </Show>
 
-      <div class="relative w-full max-w-lg mx-auto aspect-square bg-[#252526] rounded overflow-hidden">
-        <img
-          ref={imageRef}
-          src={props.imageUrl}
-          onLoad={initCropper}
-          alt="Image to scan"
-          class="w-full h-full object-contain"
-        />
-      </div>
+        <Show when={error()}>
+          <div class="p-3 bg-[#5a1d1d] text-[#f48771] rounded border border-[#f48771]/20 text-sm">
+            {error()}
+          </div>
+        </Show>
 
-      <div class="flex gap-4">
-        <button
-          onClick={handleCrop}
-          class="px-4 py-2 bg-[#007acc] text-white rounded hover:bg-[#005a9e] transition-colors flex items-center gap-2 select-none"
-          disabled={props.isLoading}
-        >
-          <i class="i-tabler-scan" />
-          Scan Cropped Area
-        </button>
-        <button
-          onClick={props.onCancel}
-          class="px-4 py-2 bg-[#3e3e42] text-[#cccccc] rounded hover:bg-[#505050] transition-colors flex items-center gap-2 select-none"
-        >
-          <i class="i-tabler-x" />
-          Cancel
-        </button>
+        <div class="relative w-full max-w-2xl mx-auto">
+          <div class="aspect-square bg-[#1e1e1e] rounded-lg border border-[#3e3e42] overflow-hidden shadow-inner">
+            <img
+              ref={imageRef}
+              src={props.imageUrl}
+              onLoad={initCropper}
+              alt="Image to scan"
+              class="w-full h-full object-contain"
+            />
+          </div>
+          <p class="text-xs text-[#cccccc]/50 mt-2 text-center select-none">
+            Drag the corners to adjust the selection area
+          </p>
+        </div>
       </div>
     </div>
   );

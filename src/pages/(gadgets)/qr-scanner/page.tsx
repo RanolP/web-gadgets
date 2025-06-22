@@ -14,6 +14,11 @@ import type { Result } from '@zxing/library';
 
 const ImageCropper = lazy(() => import('./_components/image-cropper'));
 const ScanResultItem = lazy(() => import('./_components/scan-result-item'));
+const QrCodeOverlay = lazy(() => import('./_components/qr-code-overlay'));
+const ScanInputMethods = lazy(() => import('./_components/scan-input-methods'));
+
+import { useIndexedDB } from './_hooks/use-indexed-db';
+import { showToast } from '../../../shared/toast';
 
 interface ScanResult {
   id: string;
@@ -22,85 +27,22 @@ interface ScanResult {
   timestamp: Date;
   imageUrl: string;
   resultPoints?: Array<{ x: number; y: number }>;
+  imageDimensions?: { width: number; height: number };
 }
 
 const STORAGE_KEY = 'qr-scanner-results';
-const DB_NAME = 'qr-scanner-db';
-const DB_VERSION = 1;
-const STORE_NAME = 'images';
-
-// Initialize IndexedDB
-const initDB = (): Promise<IDBDatabase> => {
-  return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
-      }
-    };
-  });
-};
-
-// Save blob to IndexedDB
-const saveBlob = async (id: string, blob: Blob): Promise<void> => {
-  const db = await initDB();
-  const transaction = db.transaction([STORE_NAME], 'readwrite');
-  const store = transaction.objectStore(STORE_NAME);
-  store.put(blob, id);
-  await new Promise((resolve, reject) => {
-    transaction.oncomplete = resolve;
-    transaction.onerror = () => reject(transaction.error);
-  });
-};
-
-// Load blob from IndexedDB
-const loadBlob = async (id: string): Promise<Blob | null> => {
-  try {
-    const db = await initDB();
-    const transaction = db.transaction([STORE_NAME], 'readonly');
-    const store = transaction.objectStore(STORE_NAME);
-    const request = store.get(id);
-
-    return new Promise((resolve, reject) => {
-      request.onsuccess = () => resolve(request.result || null);
-      request.onerror = () => reject(request.error);
-    });
-  } catch (err) {
-    console.error('Failed to load blob:', err);
-    return null;
-  }
-};
-
-// Delete blob from IndexedDB
-const deleteBlob = async (id: string): Promise<void> => {
-  try {
-    const db = await initDB();
-    const transaction = db.transaction([STORE_NAME], 'readwrite');
-    const store = transaction.objectStore(STORE_NAME);
-    store.delete(id);
-  } catch (err) {
-    console.error('Failed to delete blob:', err);
-  }
-};
 
 const QrScanner: Component = () => {
   const [scanResults, setScanResults] = createSignal<ScanResult[]>([]);
   const [isScanning, setIsScanning] = createSignal(false);
-  const [error, setError] = createSignal<string>('');
   const [imageUrl, setImageUrl] = createSignal<string>('');
   const [showCropper, setShowCropper] = createSignal(false);
   const [selectedResult, setSelectedResult] = createSignal<ScanResult | null>(
     null,
   );
 
-  let fileInputRef: HTMLInputElement | undefined;
-
   const codeReader = new BrowserMultiFormatReader();
+  const { saveBlob, loadBlob, deleteBlob, clearAllBlobs } = useIndexedDB();
 
   // Load saved results from localStorage on mount
   onMount(async () => {
@@ -156,7 +98,7 @@ const QrScanner: Component = () => {
     }
   });
 
-  const handleScanResult = async (result: Result, imgUrl: string) => {
+  const handleScanResult = async (result: Result, imgUrl: string, imageDimensions?: { width: number; height: number }) => {
     // Extract result points (corners of QR code)
     const points = result.getResultPoints();
     const resultPoints = points
@@ -167,6 +109,21 @@ const QrScanner: Component = () => {
       : undefined;
 
     const id = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    // Get image dimensions if not provided
+    let dimensions = imageDimensions;
+    if (!dimensions && imgUrl) {
+      try {
+        const img = new Image();
+        img.src = imgUrl;
+        await new Promise((resolve) => {
+          img.onload = resolve;
+        });
+        dimensions = { width: img.naturalWidth, height: img.naturalHeight };
+      } catch (err) {
+        console.error('Failed to get image dimensions:', err);
+      }
+    }
 
     // Convert blob URL to blob and save it
     try {
@@ -184,9 +141,10 @@ const QrScanner: Component = () => {
       timestamp: new Date(),
       imageUrl: imgUrl,
       resultPoints,
+      imageDimensions: dimensions,
     };
     setScanResults([newResult, ...scanResults()]);
-    setError('');
+    showToast('QR code scanned successfully!', 'success');
   };
 
   const handleError = (err: unknown) => {
@@ -197,14 +155,16 @@ const QrScanner: Component = () => {
         err.name === 'NotFoundException' ||
         err.message?.includes('No MultiFormat Readers')
       ) {
-        setError(
+        showToast(
           'No QR code found in the selected area. Please try cropping closer to the QR code.',
+          'warning',
+          5000
         );
       } else {
-        setError(err.message || 'Failed to scan QR code');
+        showToast(err.message || 'Failed to scan QR code', 'error');
       }
     } else {
-      setError('Failed to scan QR code');
+      showToast('Failed to scan QR code', 'error');
     }
   };
 
@@ -244,32 +204,32 @@ const QrScanner: Component = () => {
       }
     } catch (err) {
       console.error('Failed to read clipboard:', err);
-      setError(
+      showToast(
         'Failed to paste from clipboard. Make sure you have an image copied.',
+        'error'
       );
-    }
-  };
-
-  // Scan from file
-  const handleFileSelect = async (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    const file = target.files?.[0];
-    if (file) {
-      await scanFile(file);
     }
   };
 
   const scanFile = async (file: File) => {
     try {
       setIsScanning(true);
-      setError('');
 
       const url = URL.createObjectURL(file);
       setImageUrl(url);
 
       // Try to scan directly first
       const result = await codeReader.decodeFromImageUrl(url);
-      handleScanResult(result, url);
+      
+      // Get original image dimensions
+      const img = new Image();
+      img.src = url;
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+      const dimensions = { width: img.naturalWidth, height: img.naturalHeight };
+      
+      handleScanResult(result, url, dimensions);
     } catch (err) {
       // If direct scan fails, show cropper
       setShowCropper(true);
@@ -282,7 +242,6 @@ const QrScanner: Component = () => {
   const handleCroppedImage = async (dataUrl: string) => {
     try {
       setIsScanning(true);
-      setError('');
 
       const result = await codeReader.decodeFromImageUrl(dataUrl);
 
@@ -290,7 +249,15 @@ const QrScanner: Component = () => {
       const blob = await (await fetch(dataUrl)).blob();
       const blobUrl = URL.createObjectURL(blob);
 
-      handleScanResult(result, blobUrl);
+      // Get cropped image dimensions
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+      const dimensions = { width: img.naturalWidth, height: img.naturalHeight };
+
+      handleScanResult(result, blobUrl, dimensions);
 
       setShowCropper(false);
       // Don't revoke the original URL as we're using it in results
@@ -332,6 +299,7 @@ const QrScanner: Component = () => {
     if (selectedResult()?.id === id) {
       setSelectedResult(null);
     }
+    showToast('Result deleted', 'info', 2000);
   };
 
   const deleteAllResults = async () => {
@@ -346,6 +314,7 @@ const QrScanner: Component = () => {
     );
     setScanResults([]);
     setSelectedResult(null);
+    showToast('All results deleted', 'info');
   };
 
   const deleteOldResults = async () => {
@@ -381,6 +350,8 @@ const QrScanner: Component = () => {
     ) {
       setSelectedResult(null);
     }
+    
+    showToast(`${oldResults.length} old results deleted`, 'info');
   };
 
   const getOldResultsCount = () => {
@@ -422,47 +393,13 @@ const QrScanner: Component = () => {
 
         <div class="space-y-6">
           {/* Input Methods */}
-          <div class="flex flex-col sm:flex-row gap-4">
-            <button
-              onClick={() => fileInputRef?.click()}
-              class="px-4 py-2 bg-[#007acc] text-white rounded hover:bg-[#005a9e] transition-colors flex items-center justify-center gap-2 flex-1 sm:flex-initial select-none"
-              disabled={isScanning()}
-            >
-              <i class="i-tabler-upload" />
-              Select File
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileSelect}
-              class="hidden"
+          <Suspense fallback={<div>Loading...</div>}>
+            <ScanInputMethods
+              isScanning={isScanning()}
+              onFileSelect={scanFile}
+              onPasteClick={handlePasteClick}
             />
-
-            {/* Show instruction on non-touch devices */}
-            <div class="px-4 py-2 border-2 border-dashed border-[#3e3e42] rounded text-[#cccccc]/60 flex items-center justify-center gap-2 flex-1 sm:flex-initial select-none flex touch:hidden">
-              <i class="i-tabler-clipboard" />
-              <span class="hidden sm:inline">Paste image (Ctrl+V)</span>
-              <span class="sm:hidden">Paste (Ctrl+V)</span>
-            </div>
-
-            {/* Show button on touch devices */}
-            <button
-              onClick={handlePasteClick}
-              class="px-4 py-2 bg-[#3e3e42] text-[#cccccc] rounded hover:bg-[#505050] transition-colors flex items-center justify-center gap-2 flex-1 sm:flex-initial select-none hidden touch:flex"
-              disabled={isScanning()}
-            >
-              <i class="i-tabler-clipboard" />
-              Paste Image
-            </button>
-          </div>
-
-          {/* Error Display */}
-          <Show when={error()}>
-            <div class="p-4 bg-[#5a1d1d] text-[#f48771] rounded border border-[#f48771]/20">
-              {error()}
-            </div>
-          </Show>
+          </Suspense>
 
           {/* Loading State */}
           <Show when={isScanning()}>
@@ -549,71 +486,12 @@ const QrScanner: Component = () => {
                 <i class="i-tabler-x" />
               </button>
             </div>
-            <div class="relative">
-              <img
-                src={selectedResult()!.imageUrl}
-                alt="Full size image"
-                class="max-w-full max-h-[90vh] object-contain"
-                onLoad={(e) => {
-                  const img = e.currentTarget;
-                  const result = selectedResult();
-                  if (result?.resultPoints && result.resultPoints.length >= 3) {
-                    // Create SVG overlay
-                    const rect = img.getBoundingClientRect();
-                    const scaleX = rect.width / img.naturalWidth;
-                    const scaleY = rect.height / img.naturalHeight;
-
-                    const svg = document.createElementNS(
-                      'http://www.w3.org/2000/svg',
-                      'svg',
-                    );
-                    svg.style.position = 'absolute';
-                    svg.style.top = '0';
-                    svg.style.left = '0';
-                    svg.style.width = rect.width + 'px';
-                    svg.style.height = rect.height + 'px';
-                    svg.style.pointerEvents = 'none';
-
-                    // Create polygon for QR code area
-                    const polygon = document.createElementNS(
-                      'http://www.w3.org/2000/svg',
-                      'polygon',
-                    );
-                    const points = result.resultPoints
-                      .map((p) => `${p.x * scaleX},${p.y * scaleY}`)
-                      .join(' ');
-                    polygon.setAttribute('points', points);
-                    polygon.setAttribute('fill', 'none');
-                    polygon.setAttribute('stroke', '#007acc');
-                    polygon.setAttribute('stroke-width', '3');
-                    polygon.setAttribute('stroke-dasharray', '5,5');
-
-                    // Add corner dots
-                    result.resultPoints.forEach((point) => {
-                      const circle = document.createElementNS(
-                        'http://www.w3.org/2000/svg',
-                        'circle',
-                      );
-                      circle.setAttribute('cx', String(point.x * scaleX));
-                      circle.setAttribute('cy', String(point.y * scaleY));
-                      circle.setAttribute('r', '6');
-                      circle.setAttribute('fill', '#007acc');
-                      svg.appendChild(circle);
-                    });
-
-                    svg.appendChild(polygon);
-
-                    // Remove any existing overlay
-                    const existingSvg = img.parentElement?.querySelector('svg');
-                    if (existingSvg) {
-                      existingSvg.remove();
-                    }
-
-                    img.parentElement?.appendChild(svg);
-                  }
-                }}
+            <Suspense fallback={<div class="text-center">Loading image...</div>}>
+              <QrCodeOverlay
+                imageUrl={selectedResult()!.imageUrl}
+                resultPoints={selectedResult()!.resultPoints}
               />
-            </div>
+            </Suspense>
           </div>
         </div>
       </Show>

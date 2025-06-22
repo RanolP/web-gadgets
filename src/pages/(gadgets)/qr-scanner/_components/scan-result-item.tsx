@@ -1,4 +1,5 @@
 import { Component, Show, createSignal } from 'solid-js';
+import { showToast } from '../../../../shared/toast';
 
 interface ScanResultItemProps {
   result: {
@@ -8,6 +9,7 @@ interface ScanResultItemProps {
     timestamp: Date;
     imageUrl: string;
     resultPoints?: Array<{ x: number; y: number }>;
+    imageDimensions?: { width: number; height: number };
   };
   onImageClick: () => void;
   onDelete: (id: string) => void;
@@ -29,10 +31,12 @@ const ScanResultItem: Component<ScanResultItemProps> = (props) => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedId(resultId);
+      showToast('Copied to clipboard!', 'success', 2000);
       // Reset copied state after 2 seconds
       setTimeout(() => setCopiedId(null), 2000);
     } catch (err) {
       console.error('Failed to copy:', err);
+      showToast('Failed to copy to clipboard', 'error');
     }
   };
 
@@ -61,28 +65,74 @@ const ScanResultItem: Component<ScanResultItemProps> = (props) => {
           alt="Scanned image"
           class="w-full h-full object-cover"
         />
-        <Show when={props.result.resultPoints && props.result.resultPoints.length >= 3}>
+        <Show when={props.result.resultPoints && props.result.resultPoints.length >= 3 && props.result.imageDimensions}>
           <div class="absolute inset-0 pointer-events-none">
             <svg
               class="w-full h-full"
-              viewBox="0 0 80 80"
-              preserveAspectRatio="none"
+              viewBox={`0 0 ${props.result.imageDimensions!.width} ${props.result.imageDimensions!.height}`}
+              preserveAspectRatio="xMidYMid slice"
             >
+              {/* Subtle shadow for depth */}
               <polygon
                 points={props.result.resultPoints
-                  ?.map((p) => {
-                    // Assuming QR code detection gives normalized coordinates
-                    // Scale to thumbnail size (80x80)
-                    const x = (p.x / 100) * 80; // Adjust scale as needed
-                    const y = (p.y / 100) * 80;
-                    return `${x},${y}`;
-                  })
+                  ?.map((p) => `${p.x},${p.y}`)
+                  .join(' ')}
+                fill="rgba(0, 0, 0, 0.2)"
+                stroke="none"
+                transform="translate(3, 3)"
+              />
+              {/* White brutal stroke */}
+              <polygon
+                points={props.result.resultPoints
+                  ?.map((p) => `${p.x},${p.y}`)
                   .join(' ')}
                 fill="none"
-                stroke="#007acc"
-                stroke-width="2"
-                opacity="0.8"
+                stroke="#ffffff"
+                stroke-width={Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 25}
+                stroke-linejoin="miter"
               />
+              {/* Main colored polygon - thick and bold */}
+              <polygon
+                points={props.result.resultPoints
+                  ?.map((p) => `${p.x},${p.y}`)
+                  .join(' ')}
+                fill="rgba(0, 122, 204, 0.4)"
+                stroke="#007acc"
+                stroke-width={Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 30}
+                stroke-linejoin="miter"
+              />
+              {/* Brutal corner markers */}
+              {props.result.resultPoints?.map((point, index) => (
+                <>
+                  {/* Subtle shadow square */}
+                  <rect
+                    x={point.x - Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 30}
+                    y={point.y - Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 30}
+                    width={Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 15}
+                    height={Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 15}
+                    fill="rgba(0, 0, 0, 0.3)"
+                    transform="translate(2, 2)"
+                  />
+                  {/* White background square */}
+                  <rect
+                    x={point.x - Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 30}
+                    y={point.y - Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 30}
+                    width={Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 15}
+                    height={Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 15}
+                    fill="#ffffff"
+                    stroke="#000000"
+                    stroke-width={Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 200}
+                  />
+                  {/* Colored square */}
+                  <rect
+                    x={point.x - Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 40}
+                    y={point.y - Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 40}
+                    width={Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 20}
+                    height={Math.max(props.result.imageDimensions!.width, props.result.imageDimensions!.height) / 20}
+                    fill="#007acc"
+                  />
+                </>
+              ))}
             </svg>
           </div>
         </Show>

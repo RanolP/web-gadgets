@@ -32,6 +32,10 @@ export default defineConfig({
     'i-tabler-chevron-right',
     'i-tabler-circle-check',
     'i-tabler-refresh-alert',
+    'i-tabler-circle-x',
+    'i-tabler-alert-triangle',
+    'i-tabler-info-circle',
+    'i-tabler-crop',
   ],
   theme: {
     colors: {

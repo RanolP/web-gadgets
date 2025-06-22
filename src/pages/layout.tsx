@@ -4,6 +4,7 @@ import type { Component } from 'solid-js';
 import { createSignal, For, Show, createEffect } from 'solid-js';
 import { gadgetList } from './(index)/gadgets';
 import { PwaUpdatePrompt } from './layout/_components/pwa-update-prompt';
+import { ToastContainer } from '../shared/toast';
 
 const Layout: Component<RouteSectionProps> = (props) => {
   const location = useLocation();
@@ -222,6 +223,9 @@ const Layout: Component<RouteSectionProps> = (props) => {
 
       {/* PWA Update Prompt */}
       <PwaUpdatePrompt />
+      
+      {/* Toast Container */}
+      <ToastContainer />
     </div>
   );
 };
