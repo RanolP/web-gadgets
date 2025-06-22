@@ -3,6 +3,7 @@ import type { RouteSectionProps } from '@solidjs/router';
 import type { Component } from 'solid-js';
 import { createSignal, For, Show, createEffect } from 'solid-js';
 import { gadgetList } from './(index)/gadgets';
+import { PwaUpdatePrompt } from './layout/_components/pwa-update-prompt';
 
 const Layout: Component<RouteSectionProps> = (props) => {
   const location = useLocation();
@@ -211,12 +212,16 @@ const Layout: Component<RouteSectionProps> = (props) => {
         {/* Status Bar */}
         <div class="flex h-6 bg-[#007acc] text-white text-xs items-center px-2 select-none">
           <span>Web Gadgets</span>
+          <span class="px-2 text-white/60">v{__APP_VERSION__}</span>
           <div class="flex-1" />
           <span class="px-2 hidden sm:inline">UTF-8</span>
           <span class="px-2 hidden sm:inline">TypeScript</span>
           <span class="px-2">Solid.js</span>
         </div>
       </div>
+
+      {/* PWA Update Prompt */}
+      <PwaUpdatePrompt />
     </div>
   );
 };

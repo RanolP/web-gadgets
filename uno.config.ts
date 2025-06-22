@@ -30,6 +30,8 @@ export default defineConfig({
     'i-tabler-trash',
     'i-tabler-external-link',
     'i-tabler-chevron-right',
+    'i-tabler-circle-check',
+    'i-tabler-refresh-alert',
   ],
   theme: {
     colors: {
@@ -48,6 +50,17 @@ export default defineConfig({
         input: '#3c3c3c',
         'error-bg': '#5a1d1d',
         'error-text': '#f48771',
+      },
+    },
+    animation: {
+      keyframes: {
+        'slide-up': '{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}',
+      },
+      durations: {
+        'slide-up': '300ms',
+      },
+      timingFns: {
+        'slide-up': 'ease-out',
       },
     },
   },

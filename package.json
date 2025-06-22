@@ -1,5 +1,6 @@
 {
   "name": "gadgets.ranolp.dev",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -22,6 +23,8 @@
     "typescript": "^5.8.3",
     "unocss": "^66.2.3",
     "vite": "^5.0.8",
-    "vite-plugin-solid": "^2.8.2"
+    "vite-plugin-pwa": "^1.0.0",
+    "vite-plugin-solid": "^2.8.2",
+    "workbox-window": "^7.3.0"
   }
 }
