@@ -17,15 +17,19 @@ const IndexPage: Component = () => {
             Start
           </h3>
           <div class="space-y-1">
-            <div class="flex items-center gap-2 text-sm">
-              <i class="i-tabler-qrcode text-[#007acc]" />
-              <A
-                href="/qr-scanner"
-                class="text-[#007acc] hover:underline"
-              >
-                ./qr-scanner
-              </A>
-              <span class="text-[#cccccc]/60">: Extract text from QR codes with image cropping support</span>
+            <div class="flex flex-row gap-2 text-sm">
+              <div class="flex flex-row items-center gap-1">
+                <i class="i-tabler-qrcode text-[#007acc]" />
+                <A
+                  href="/qr-scanner"
+                  class="text-[#007acc] hover:underline whitespace-nowrap"
+                >
+                  ./qr-scanner
+                </A>
+              </div>
+              <span class="text-[#cccccc]/60">
+                Extract text from QR codes with image cropping support
+              </span>
             </div>
           </div>
         </div>

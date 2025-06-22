@@ -49,3 +49,6 @@ src/
 - Each gadget should have its own dedicated path (not dynamic routing)
 - Gadget metadata is stored separately in `src/data/gadgets.ts`
 - The Layout component is passed as the `root` prop to the Router
+
+## Versioning
+- Every change you commit needs to be versioned properly
